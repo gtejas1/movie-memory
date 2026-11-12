@@ -1,7 +1,7 @@
 "use client";
 
 import { useActionState } from "react";
-import { saveFavoriteMovie, type OnboardingState } from "./actions";
+import { saveFavoriteMovie, type OnboardingState } from "@/app/onboarding/actions";
 
 const initialState: OnboardingState = {};
 

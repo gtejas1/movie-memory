@@ -1,5 +1,5 @@
-import { openai, OPENAI_MODEL } from "@/lib/openai";
-import { prisma } from "@/lib/prisma";
+import { openai, OPENAI_MODEL } from "@/config/openai";
+import { prisma } from "@/config/prisma";
 
 export class FactGenerationError extends Error {}
 

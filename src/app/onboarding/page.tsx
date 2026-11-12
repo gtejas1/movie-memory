@@ -1,6 +1,6 @@
 import { redirect } from "next/navigation";
-import { requireUser } from "@/lib/current-user";
-import { MovieForm } from "./movie-form";
+import { requireUser } from "@/utils/current-user";
+import { MovieForm } from "@/components/onboarding/movie-form";
 
 export default async function Onboarding() {
   const user = await requireUser();

@@ -1,4 +1,4 @@
-import { FactGenerationError, generateFact } from "@/lib/facts";
+import { FactGenerationError, generateFact } from "@/utils/facts";
 
 /** Async server component, rendered inside Suspense so the page does not block on OpenAI. */
 export async function FunFact({ userId, movie }: { userId: string; movie: string }) {

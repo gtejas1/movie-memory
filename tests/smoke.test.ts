@@ -1,5 +1,5 @@
 import { describe, it, expect } from "vitest";
-import { movieSchema } from "@/lib/validation";
+import { movieSchema } from "@/utils/validation";
 
 describe("movieSchema", () => {
   it("trims input", () => expect(movieSchema.parse("  Heat  ")).toBe("Heat"));

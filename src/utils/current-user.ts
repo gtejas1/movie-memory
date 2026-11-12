@@ -1,6 +1,6 @@
 import { redirect } from "next/navigation";
-import { auth } from "@/lib/auth";
-import { prisma } from "@/lib/prisma";
+import { auth } from "@/config/auth";
+import { prisma } from "@/config/prisma";
 
 /** Returns the signed-in user from the DB, or redirects to the landing page. */
 export async function requireUser() {

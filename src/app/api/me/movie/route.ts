@@ -1,7 +1,7 @@
 import { NextResponse } from "next/server";
-import { auth } from "@/lib/auth";
-import { prisma } from "@/lib/prisma";
-import { movieSchema } from "@/lib/validation";
+import { auth } from "@/config/auth";
+import { prisma } from "@/config/prisma";
+import { movieSchema } from "@/utils/validation";
 
 export async function PUT(request: Request) {
   const session = await auth();
