@@ -156,9 +156,7 @@ The onboarding form uses a server action with the same validation (`src/utils/va
 
 ## Why Variant A
 
-The evaluation criteria for this exercise emphasize data modeling, security and error handling, and Variant A goes deepest on exactly those: schema design, a correct time window, concurrency, and failure behavior.
-
-It also fits my background. I spent several years writing C++ for real-time systems (aircraft engine diagnostics and financial data tooling), where the habits that matter are the ones Variant A rewards: reasoning about shared state and races before writing code, defining exactly what "correct" means at the boundaries (here, a fact that is 59 vs. 60 seconds old), deciding up front what happens when a dependency fails, and finding root causes instead of patching symptoms. Those C++ systems taught me to treat a lock or a timeout as a design decision with a failure mode, which is why the lock here has an expiry and an owner token, and why the OpenAI timeout is shorter than the lock lifetime. More recently I have built PostgreSQL- and Redis-backed web services and integrated the OpenAI API, so the stack here is familiar ground. The concurrency problem (several tabs generating at once) is also the part of this app that is easiest to get subtly wrong, which made it the most worthwhile one to build carefully.
+The criteria emphasize data modeling, security and error handling, and Variant A goes deepest on those: schema design, a correct time window, concurrency, and failure behavior. It also suits my C++ background in real-time systems, where I learned to define correctness at the boundaries (a fact 59 vs. 60 seconds old), reason about races before coding, and treat every lock and timeout as having a failure mode.
 
 ## Key tradeoffs
 
