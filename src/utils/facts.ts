@@ -1,6 +1,13 @@
 import { openai, OPENAI_MODEL } from "@/config/openai";
 import { prisma } from "@/config/prisma";
-import { readCachedFact, writeCachedFact, type CachedFact } from "@/utils/fact-cache";
+import {
+  acquireGenerationLock,
+  readCachedFact,
+  releaseGenerationLock,
+  waitForCachedFact,
+  writeCachedFact,
+  type CachedFact,
+} from "@/utils/fact-cache";
 
 export class FactGenerationError extends Error {}
 
@@ -31,25 +38,60 @@ async function askOpenAiForFact(movie: string): Promise<string> {
   }
 }
 
-/** Generates a new fact and stores it in Postgres, always against the given user. */
-async function generateFact(userId: string, movie: string) {
+export type FactSource = "cache" | "generated" | "stale-fallback";
+export type FactResult = CachedFact & { source: FactSource };
+
+/** Generates a fact, stores it in Postgres (always against the given user) and caches it. */
+async function generateAndCacheFact(userId: string, movie: string): Promise<FactResult> {
   const content = await askOpenAiForFact(movie);
-  return prisma.fact.create({ data: { userId, movie, content } });
+  const row = await prisma.fact.create({ data: { userId, movie, content } });
+
+  const fact = { content: row.content, createdAt: row.createdAt.toISOString() };
+  await writeCachedFact(userId, movie, fact);
+  return { ...fact, source: "generated" };
 }
 
-export type FactResult = CachedFact & { cached: boolean };
+/** Failure path: the newest stored fact for THIS user and movie, or a friendly error. */
+async function latestStoredFact(userId: string, movie: string): Promise<FactResult> {
+  const latest = await prisma.fact.findFirst({
+    where: { userId, movie },
+    orderBy: { createdAt: "desc" },
+  });
+  if (!latest) {
+    throw new FactGenerationError("We could not generate a fun fact right now. Please try again.");
+  }
+  return { content: latest.content, createdAt: latest.createdAt.toISOString(), source: "stale-fallback" };
+}
 
 /**
  * Returns the user's fact for this movie.
- * 1. Redis hit (younger than 60s): return it immediately, no OpenAI call.
- * 2. Miss: generate, save to Postgres, cache for 60s, return.
+ *  1. Cache hit (under 60s old): return it, no OpenAI call.
+ *  2. Miss: take the "generation in progress" lock.
+ *     - Lock busy: another request is generating; wait for its fact and share it.
+ *     - Lock acquired (or Redis unavailable): generate, store, cache.
+ *  3. Any failure: fall back to the latest stored fact, else a friendly error.
  */
 export async function getFact(userId: string, movie: string): Promise<FactResult> {
   const cached = await readCachedFact(userId, movie);
-  if (cached) return { ...cached, cached: true };
+  if (cached) return { ...cached, source: "cache" };
 
-  const fact = await generateFact(userId, movie);
-  const result = { content: fact.content, createdAt: fact.createdAt.toISOString() };
-  await writeCachedFact(userId, movie, result);
-  return { ...result, cached: false };
+  const lock = await acquireGenerationLock(userId, movie);
+
+  if (lock.status === "busy") {
+    const shared = await waitForCachedFact(userId, movie);
+    return shared ? { ...shared, source: "cache" } : latestStoredFact(userId, movie);
+  }
+
+  try {
+    // Double-check: another request may have finished between our cache miss and getting the lock.
+    const justCached = lock.status === "acquired" ? await readCachedFact(userId, movie) : null;
+    if (justCached) return { ...justCached, source: "cache" };
+
+    return await generateAndCacheFact(userId, movie);
+  } catch (error) {
+    console.error("Fact generation failed, using stored fact if any:", error);
+    return await latestStoredFact(userId, movie);
+  } finally {
+    await releaseGenerationLock(lock);
+  }
 }

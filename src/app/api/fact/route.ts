@@ -13,8 +13,9 @@ export async function GET() {
   }
 
   try {
-    const { cached, ...fact } = await getFact(user.id, user.favoriteMovie);
-    return NextResponse.json({ fact, cached });
+    // The user id always comes from the session, never from the request.
+    const { source, ...fact } = await getFact(user.id, user.favoriteMovie);
+    return NextResponse.json({ fact, source });
   } catch (error) {
     const message = error instanceof FactGenerationError ? error.message : "Unexpected error";
     return NextResponse.json({ error: message }, { status: 502 });
