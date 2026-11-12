@@ -156,7 +156,7 @@ The onboarding form uses a server action with the same validation (`src/utils/va
 
 ## Why Variant A
 
-The criteria emphasize data modeling, security and error handling, and Variant A goes deepest on those: schema design, a correct time window, concurrency, and failure behavior. It also suits my C++ background in real-time systems, where I learned to define correctness at the boundaries (a fact 59 vs. 60 seconds old), reason about races before coding, and treat every lock and timeout as having a failure mode.
+The criteria emphasize data modeling, security and error handling, and Variant A goes deepest on those: schema design, a correct time window, concurrency, and failure behavior. I chose it out of interest: I have worked on similar problems in real-time systems, where defining correctness at the boundaries (a fact 59 vs. 60 seconds old), reasoning about races, and planning for failure were the hard parts, and I wanted to apply that thinking to a web backend.
 
 ## Key tradeoffs
 
