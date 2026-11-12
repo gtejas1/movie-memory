@@ -156,7 +156,7 @@ The onboarding form uses a server action with the same validation (`src/utils/va
 
 ## Why Variant A
 
-The criteria emphasize data modeling, security and error handling, and Variant A goes deepest on those: schema design, a correct time window, concurrency, and failure behavior. I chose it out of interest: I have worked on similar problems in real-time systems, where defining correctness at the boundaries (a fact 59 vs. 60 seconds old), reasoning about races, and planning for failure were the hard parts, and I wanted to apply that thinking to a web backend.
+The evaluation criteria for this exercise emphasize data modeling, security and error handling, and Variant A goes deepest on exactly those: schema design, a correct time window, concurrency, and failure behavior. I also find the concurrency problem (several tabs generating at once) the most interesting part of this app, and it is easy to get subtly wrong.
 
 ## Key tradeoffs
 
