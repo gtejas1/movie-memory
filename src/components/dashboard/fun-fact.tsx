@@ -1,9 +1,9 @@
-import { FactGenerationError, generateFact } from "@/utils/facts";
+import { FactGenerationError, getFact } from "@/utils/facts";
 
 /** Async server component, rendered inside Suspense so the page does not block on OpenAI. */
 export async function FunFact({ userId, movie }: { userId: string; movie: string }) {
   try {
-    const fact = await generateFact(userId, movie);
+    const fact = await getFact(userId, movie);
     return <p className="text-lg leading-relaxed">{fact.content}</p>;
   } catch (error) {
     const message =

@@ -1,6 +1,6 @@
 import { NextResponse } from "next/server";
 import { auth } from "@/config/auth";
-import { FactGenerationError, generateFact } from "@/utils/facts";
+import { FactGenerationError, getFact } from "@/utils/facts";
 import { prisma } from "@/config/prisma";
 
 export async function GET() {
@@ -13,8 +13,8 @@ export async function GET() {
   }
 
   try {
-    const fact = await generateFact(user.id, user.favoriteMovie);
-    return NextResponse.json({ fact: { content: fact.content, createdAt: fact.createdAt } });
+    const { cached, ...fact } = await getFact(user.id, user.favoriteMovie);
+    return NextResponse.json({ fact, cached });
   } catch (error) {
     const message = error instanceof FactGenerationError ? error.message : "Unexpected error";
     return NextResponse.json({ error: message }, { status: 502 });

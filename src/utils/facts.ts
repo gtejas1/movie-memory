@@ -1,5 +1,6 @@
 import { openai, OPENAI_MODEL } from "@/config/openai";
 import { prisma } from "@/config/prisma";
+import { readCachedFact, writeCachedFact, type CachedFact } from "@/utils/fact-cache";
 
 export class FactGenerationError extends Error {}
 
@@ -30,11 +31,25 @@ async function askOpenAiForFact(movie: string): Promise<string> {
   }
 }
 
-/**
- * Base implementation: generate a new fact on every call and store it.
- * The fact is always saved against the given user, so facts stay private to them.
- */
-export async function generateFact(userId: string, movie: string) {
+/** Generates a new fact and stores it in Postgres, always against the given user. */
+async function generateFact(userId: string, movie: string) {
   const content = await askOpenAiForFact(movie);
   return prisma.fact.create({ data: { userId, movie, content } });
+}
+
+export type FactResult = CachedFact & { cached: boolean };
+
+/**
+ * Returns the user's fact for this movie.
+ * 1. Redis hit (younger than 60s): return it immediately, no OpenAI call.
+ * 2. Miss: generate, save to Postgres, cache for 60s, return.
+ */
+export async function getFact(userId: string, movie: string): Promise<FactResult> {
+  const cached = await readCachedFact(userId, movie);
+  if (cached) return { ...cached, cached: true };
+
+  const fact = await generateFact(userId, movie);
+  const result = { content: fact.content, createdAt: fact.createdAt.toISOString() };
+  await writeCachedFact(userId, movie, result);
+  return { ...result, cached: false };
 }
